@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Realtime AI Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root {
+    --bg: #0f172a;
+    --panel: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.15);
+    --user: #38bdf8;
+    --ai: #4ade80;
+    --text: #e5e7eb;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    font-family: Inter, system-ui, sans-serif;
+    background: linear-gradient(135deg, #020617, #0f172a);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 420px;
+    height: 85vh;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header */
+.chat-header {
+    padding: 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.status {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Messages */
+.chat-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.message {
+    margin-bottom: 12px;
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+    animation: fadeIn 0.3s ease;
+}
+
+.user {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    align-self: flex-end;
+    color: var(--user);
+}
+
+.ai {
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    align-self: flex-start;
+    color: var(--ai);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Input */
+.chat-input {
+    display: flex;
+    padding: 12px;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.chat-input input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--text);
+    outline: none;
+}
+
+.chat-input input::placeholder {
+    color: #9ca3af;
+}
+
+.chat-input button {
+    background: linear-gradient(135deg, #38bdf8, #4ade80);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.chat-input button:hover {
+    opacity: 0.9;
+}
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        Realtime AI Chat
+        <div class="status" id="status">Connecting…</div>
+    </div>
+
+    <div class="chat-messages" id="messages"></div>
+
+    <div class="chat-input">
+        <input id="input" placeholder="Type a message…" />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+const sessionId = "session_" + Math.floor(Math.random() * 100000);
+const ws = new WebSocket(`ws://localhost:8000/ws/session/${sessionId}`);
+
+const messagesDiv = document.getElementById("messages");
+const statusDiv = document.getElementById("status");
+const input = document.getElementById("input");
+
+let currentAIMessage = null;
+
+ws.onopen = () => {
+    statusDiv.textContent = "🟢 Connected";
+};
+
+ws.onclose = () => {
+    statusDiv.textContent = "🔴 Disconnected";
+};
+
+ws.onmessage = (event) => {
+    if (!currentAIMessage) {
+        currentAIMessage = document.createElement("div");
+        currentAIMessage.className = "message ai";
+        messagesDiv.appendChild(currentAIMessage);
+    }
+    currentAIMessage.textContent += event.data;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+};
+
+function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    const userMsg = document.createElement("div");
+    userMsg.className = "message user";
+    userMsg.textContent = text;
+    messagesDiv.appendChild(userMsg);
+
+    ws.send(text);
+    input.value = "";
+    currentAIMessage = null;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Enter key support
+input.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+});
+</script>
+
+</body>
+</html>
