@@ -78,7 +78,7 @@ create table sessions (
     summary text
 );
 
-etailed Event Log Table
+detailed Event Log Table
 
 create table events (
     id bigserial primary key,
@@ -156,9 +156,5 @@ Key Design Choices
 ---
 
 ---
-
-Conclusion
-
-This project fully satisfies the Realtime AI Backend assignment and demonstrates production-grade backend engineering practices.
 
 Author: Saptarshi Debnath
